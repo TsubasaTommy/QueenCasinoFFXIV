@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
+using static SamplePlugin.Constants;
 
 namespace SamplePlugin.Windows;
 
@@ -10,7 +11,7 @@ public class ConfigWindow : Window, IDisposable
     private Configuration Configuration;
 
     public ConfigWindow(Plugin plugin) : base(
-        "A Wonderful Configuration Window",
+        WINDOWNAME_CONF,
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {

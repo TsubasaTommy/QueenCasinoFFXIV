@@ -1,10 +1,11 @@
-﻿using Dalamud.Game.Command;
+using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using System.IO;
 using System.Reflection;
 using Dalamud.Interface.Windowing;
 using SamplePlugin.Windows;
+using static SamplePlugin.Constants;
 
 namespace SamplePlugin
 {
@@ -53,7 +54,7 @@ namespace SamplePlugin
         private void OnCommand(string command, string args)
         {
             // in response to the slash command, just display our main ui
-            WindowSystem.GetWindow("My Amazing Window").IsOpen = true;
+            WindowSystem.GetWindow(WINDOWNAME_MAIN).IsOpen = true;
         }
 
         private void DrawUI()
@@ -63,7 +64,7 @@ namespace SamplePlugin
 
         public void DrawConfigUI()
         {
-            WindowSystem.GetWindow("A Wonderful Configuration Window").IsOpen = true;
+            WindowSystem.GetWindow(WINDOWNAME_CONF).IsOpen = true;
         }
     }
 }

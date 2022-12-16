@@ -4,6 +4,7 @@ using Dalamud.Plugin;
 using System.IO;
 using System.Reflection;
 using Dalamud.Interface.Windowing;
+using Dalamud.Game.Gui;
 using SamplePlugin.Windows;
 using static SamplePlugin.Constants;
 
@@ -21,7 +22,9 @@ namespace SamplePlugin
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
-            [RequiredVersion("1.0")] CommandManager commandManager)
+            [RequiredVersion("1.0")] CommandManager commandManager,
+            [RequiredVersion("1.0")] ChatGui chatgui
+            )
         {
             this.PluginInterface = pluginInterface;
             this.CommandManager = commandManager;
@@ -34,7 +37,7 @@ namespace SamplePlugin
             var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
 
             WindowSystem.AddWindow(new ConfigWindow(this));
-            WindowSystem.AddWindow(new MainWindow(this, goatImage));
+            WindowSystem.AddWindow(new MainWindow(this, chatgui));
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {

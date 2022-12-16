@@ -1,33 +1,43 @@
 using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
+using Dalamud.Game.Text.SeStringHandling;
 using ImGuiNET;
 using ImGuiScene;
 using static SamplePlugin.Constants;
+using Dalamud.IoC;
+using Dalamud.Game.Gui;
 
 namespace SamplePlugin.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private TextureWrap GoatImage;
+    private ChatGui chatgui;
     private Plugin Plugin;
+    private SeString sestring = new SeString();
+    private string print_string; 
 
-    public MainWindow(Plugin plugin, TextureWrap goatImage) : base(
+    public MainWindow(
+        Plugin plugin, ChatGui chatgui
+        
+        ) : base(
         WINDOWNAME_MAIN, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+
     {
+        this.chatgui = chatgui;
         this.SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        this.GoatImage = goatImage;
         this.Plugin = plugin;
+
     }
 
     public void Dispose()
     {
-        this.GoatImage.Dispose();
+
     }
 
     public override void Draw()
@@ -38,12 +48,19 @@ public class MainWindow : Window, IDisposable
         {
             this.Plugin.DrawConfigUI();
         }
+        if (ImGui.Button("Print message"))
+        {
+            this.chatgui.Print("hello");
+        }
+
 
         ImGui.Spacing();
 
-        ImGui.Text("Have a goat:");
+        ImGui.Text("");
+
         ImGui.Indent(55);
-        ImGui.Image(this.GoatImage.ImGuiHandle, new Vector2(this.GoatImage.Width, this.GoatImage.Height));
+        
         ImGui.Unindent(55);
+
     }
 }

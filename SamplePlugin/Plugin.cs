@@ -23,7 +23,7 @@ namespace SamplePlugin
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
             [RequiredVersion("1.0")] CommandManager commandManager,
-            [RequiredVersion("1.0")] ChatGui chatgui
+            [RequiredVersion("1.0")] ChatGui chatGui
             )
         {
             this.PluginInterface = pluginInterface;
@@ -37,7 +37,7 @@ namespace SamplePlugin
             var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
 
             WindowSystem.AddWindow(new ConfigWindow(this));
-            WindowSystem.AddWindow(new MainWindow(this, chatgui));
+            WindowSystem.AddWindow(new MainWindow(this, chatGui));
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {

@@ -5,20 +5,27 @@ using System.IO;
 using System.Reflection;
 using Dalamud.Interface.Windowing;
 using Dalamud.Game.Gui;
+using Dalamud.Game.Text.SeStringHandling;
 using SamplePlugin.Windows;
 using static SamplePlugin.Constants;
+using Dalamud.Game.Text;
 
 namespace SamplePlugin
 {
     public sealed class Plugin : IDalamudPlugin
     {
         public string Name => "Sample Plugin";
-        private const string CommandName = "/pmycommand";
+        private const string CommandName = "/pm";
+
+        public MainWindow Main1;
 
         private DalamudPluginInterface PluginInterface { get; init; }
         private CommandManager CommandManager { get; init; }
         public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("SamplePlugin");
+
+
+        public ChatGui chatGui;
 
         public Plugin(
             [RequiredVersion("1.0")] DalamudPluginInterface pluginInterface,
@@ -36,8 +43,12 @@ namespace SamplePlugin
             var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
             var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
 
+
+            Main1 = new MainWindow(this, chatGui);
+
+
             WindowSystem.AddWindow(new ConfigWindow(this));
-            WindowSystem.AddWindow(new MainWindow(this, chatGui));
+            WindowSystem.AddWindow(Main1);
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
@@ -46,12 +57,17 @@ namespace SamplePlugin
 
             this.PluginInterface.UiBuilder.Draw += DrawUI;
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
+
+
         }
+
 
         public void Dispose()
         {
+            Main1.Dispose();
             this.WindowSystem.RemoveAllWindows();
             this.CommandManager.RemoveHandler(CommandName);
+            
         }
 
         private void OnCommand(string command, string args)

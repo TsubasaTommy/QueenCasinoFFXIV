@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Game.Text.SeStringHandling;
@@ -20,14 +21,9 @@ public class MainWindow : Window, IDisposable
 {
     private ChatGui chatGui;
     private Plugin Plugin;
-    private XivChatEntry xivChat;
-    private XivChatType xivType = new XivChatType();
-    private Logic logic = new Logic(true);
-    private string type;
-    private uint print_senderId;
-    private string print_message;
-    private string print_name;
-    private string print_debug;
+    private Logic logic;
+    
+
     
 
     public MainWindow(
@@ -37,15 +33,15 @@ public class MainWindow : Window, IDisposable
         WINDOWNAME_MAIN, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
 
     {
-        this.chatGui = chatGui;
         this.SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
-
+        
+        this.chatGui = chatGui;
         this.Plugin = plugin;
-
+        this.logic = new Logic(chatGui);
 
         //Event Chat update
         this.chatGui.ChatMessage += this.OnChat;
@@ -55,89 +51,140 @@ public class MainWindow : Window, IDisposable
 
     public void OnChat(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
     {
-   
-        string messageStr = Strings.StrConv(message.ToString(), VbStrConv.Narrow, 0);
+        PluginLog.Debug($"{type} {senderId} {sender.ToString()} ");
         
-
-
         if (type.ToString() == "2122")// dice or not
         {
-            this.print_debug = "dice";
-            message.ToString();
-            this.logic.MainLogic(messageStr);
+            PluginLog.Debug("Detected dice");
+            this.logic.MainLogic(message.ToString());
         }
+        
         switch (type)
         {
             case XivChatType.Say:
+            case XivChatType.Party:
+                //if (Regex.IsMatch(sender.ToString(), "Tsubasa Roseline")) break;//sayでつぱた無視
+                if (!Regex.IsMatch(message.ToString(), @"^bet|^b|^ｂ")) break;
                 try
                 {
-                    if (Regex.IsMatch(sender.ToString(), "Tsubasa Roseline")) break;//sayでつぱた無視
-                    int bet = int.Parse(Regex.Match(messageStr, @"[1-9][0-9]+").ToString());
-                    Logic.betType betType = DetectBetType(messageStr);
-                    
+                    string betMessage = Regex.Replace(message.ToString(), "[０-９]", delegate (Match m) {
+                        char ch = (char)('0' + (m.Value[0] - '０'));
+                        return ch.ToString();
+                    });
+
+                    PluginLog.Debug($"Detected say:{betMessage}");
+                    int bet;
+                    Logic.betType betType;
+           
+                    bet = int.Parse(Regex.Match(betMessage.ToString(), @"[1-9][0-9]+").ToString());
+
+                    if (BET_MAX < bet)
+                    {
+                        bet = BET_MAX;
+                    }
+
+                    betType = DetectBetType(betMessage.ToString());
+
                     if(betType != Logic.betType.none && 10 <= bet)
                     {
                         logic.AddPlayer(sender.ToString());
-                        logic.SetBet(sender.ToString(), bet, betType);
+                        logic.SetBet(sender.ToString(), bet,betType);
+                        
                     }
                 }
                 catch(FormatException e)
                 {
-                    this.print_debug = "SayでのBetが有効な文字列ではない";
+                    PluginLog.Debug("MainWindow Onchat でえらー");
                 }
                 break;
-            default:
-                this.print_debug = "";
+            case XivChatType.Yell:
+                if (Regex.IsMatch(message.ToString(), @"運命のダイス"))
+                {
+                    logic.InitializeDice();
+                    PluginLog.Debug("logic.dice initialized");
+                }
                 break;
         }
 
-        this.type = type.ToString();
-        this.print_senderId = senderId;
-        this.print_message = message.ToString();
-        this.print_name = sender.ToString();
+
     }
 
     public void Dispose()
     {
         this.chatGui.ChatMessage -= this.OnChat;
+        this.logic.Dispose();
     }
 
     public override void Draw()
     {
-        ImGui.Text($"The random config bool is {this.Plugin.Configuration.SomePropertyToBeSavedAndWithADefault}");
-
-        if (ImGui.Button("Show Settings"))
+        var flags =  ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg ;
+        if (ImGui.Button("All reset")) this.logic = new Logic(chatGui);
+        if (ImGui.Button($"Premium:{logic.premium}")) logic.TogglePremium();
+        if (ImGui.Button("Send Message")) 
         {
-            this.Plugin.DrawConfigUI();
+            logic.SendMessage("hello",XivChatType.Yell);
         }
 
 
-        ImGui.Spacing();
+        ImGui.Text($"High:{logic.high}");
+        ImGui.Text($"Low:{logic.low}");
 
-        ImGui.Text(this.print_debug);
-        ImGui.Text(this.type);
-        ImGui.Text(this.print_senderId.ToString());
-        ImGui.Text(this.print_name);
-        ImGui.Text(this.print_message);
-
-        foreach(Logic.Player x in logic.players)
+        if (ImGui.BeginTable("number", logic.num.Length,flags))
         {
-            ImGui.Text($"{x.name}:{x.score}:{x.type}:{x.bet}");
+            for(int i = 0; i < logic.num.Length; i++)
+            {
+                ImGui.TableSetupColumn($"Num:{i + 1}");
+            }
+            ImGui.TableHeadersRow();
+            foreach (var (x, i) in logic.num.Select((value, index) => (value, index)))
+            {
+                ImGui.TableNextColumn();
+                ImGui.Text($"{x}");
+            }
+            ImGui.EndTable();
         }
 
 
-        ImGui.Indent(55);
-        
-        ImGui.Unindent(55);
+        if(ImGui.BeginTable("player", 5,flags))
+        {
+            ImGui.TableSetupColumn($"Name");
+            ImGui.TableSetupColumn($"Score");
+            ImGui.TableSetupColumn($"Type");
+            ImGui.TableSetupColumn($"Bet");
+            ImGui.TableSetupColumn($"Delete");
 
+            ImGui.TableHeadersRow();
+
+            for (int row = 0; row < logic.players.Count; row++)
+            {
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{logic.players[row].name}");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{logic.players[row].score}");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{logic.players[row].type}");
+
+                ImGui.TableNextColumn();
+                ImGui.Text($"{logic.players[row].bet}");
+
+                ImGui.TableNextColumn();
+                if (ImGui.Button("X")) logic.players.RemoveAt(row);
+
+                ImGui.TableNextRow();
+            }
+            ImGui.EndTable();
+        }
     }
     private Logic.betType DetectBetType(string str)
     {
         str= str.ToLower();
         str = Regex.Replace(str, @"[1-9][0-9]+", "");
 
-        if (Regex.IsMatch(str, @"high|ﾊｲ|はい")) return Logic.betType.high;
-        if (Regex.IsMatch(str, @"low|ﾛｳ|ﾛｰ|ろう|ろー|ろｰ")) return Logic.betType.low;
+        if (Regex.IsMatch(str, @"high|ﾊｲ|ハイ|はい")) return Logic.betType.high;
+        if (Regex.IsMatch(str, @"low|ﾛｳ|ロウ|ロー|ﾛｰ|ろう|ろー|ろｰ")) return Logic.betType.low;
         try
         {
             switch (int.Parse(Regex.Match(str, @"[1-6]").ToString()))
@@ -162,7 +209,5 @@ public class MainWindow : Window, IDisposable
         {
             return Logic.betType.none;
         }
-
-
     }
 }

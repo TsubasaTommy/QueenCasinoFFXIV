@@ -1,21 +1,34 @@
+using Dalamud.Game.Gui;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Logging;
+using Microsoft.VisualBasic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using static SamplePlugin.Constants;
 
 namespace SamplePlugin
 {
-    internal class Logic
+    public class Logic: IDisposable
     {
-        private bool bonus;
-        private double rateBonus = 0;
-        private double[] rateNum = { 1, 2, 10 };
-        private double rateHigh = 1.5;
-        private double rateLow = 1.5;
+        private ChatGui chatGui;
+
+        private string msgs;
+        private string results;
+
+        public bool premium = false;
+        private double rateBonus;
+        private double[] rateNum = new double[3] ;
+        private double rateHigh;
+        private double rateLow;
 
         private int[] dice = {0,0,0};
-        private byte[] num = new byte[5];
-        private bool high = false;
-        private bool low = false;
+        public byte[] num = new byte[6];
+        public bool high = false;
+        public bool low = false;
         public List<Player> players = new List<Player>();
        
         public  enum betType
@@ -38,41 +51,49 @@ namespace SamplePlugin
             public betType type;
         }
 
-        public Logic(bool bonus) 
+        public Logic(ChatGui chatGui) 
         {
-            this.bonus = bonus;
+            this.chatGui = chatGui;
+            TogglePremium();
         }
         private int TrimString(string dice)
         {
-            if(Regex.IsMatch(dice, @"Tsubasa Roseline"))
+            if(Regex.IsMatch(dice, @"Tsubasa Roseline")&& Regex.IsMatch(dice, @"6"))
             {
-                string pattern = @"(?<=面)(.*)";
-                string result = Regex.Replace(dice, pattern, "");
-                pattern = @"[0-9]";
-                return int.Parse(Regex.Replace(result, pattern, ""));
+                
+                string result = Regex.Replace(dice, @".+?は、", "");
+                return int.Parse(Regex.Replace(result, @"[^0-9]", ""));
             }
             return 0;
         }
-        private void InitializeDice()
+        public void InitializeDice()
         {
             for(int i = 0; i< this.dice.Length; i++)
             {
                 this.dice[i] = 0;
             }
         }
-        public void MainLogic(string dice)
+        public async void MainLogic(string dice)
         {
-            if (Regex.IsMatch(dice, "Tsubasa Roseline")) return; //Tsubasa Roseline 以外のダイスを無視
+            if (!Regex.IsMatch(dice, "Tsubasa Roseline")) return; //Tsubasa Roseline 以外のダイスを無視
             if (this.players.Count == 0) return;
-
-            if (this.dice[this.dice.Length - 1] != 0) this.InitializeDice();//diceが３つ埋まってたら初期化
 
             for (int i=0; i< this.dice.Length; i++)
             {
-                if (this.dice[i] == 0) this.dice[i] = this.TrimString(dice);//dice うまってないところにトリムdiceぶちこむ
+                
+
+                if (this.dice[i] == 0) 
+                {     
+                    this.dice[i] = this.TrimString(dice);
+                   
+
+                    break;
+                }//dice うまってないところにトリムdiceぶちこむ
             }
 
-            for(int i = 0; i < this.num.Length; i++)//num初期化 前ので汚れてるから
+
+
+            for (int i = 0; i < this.num.Length -1; i++)//num初期化 前ので汚れてるから
             {
                 this.num[i] = 0;
             } 
@@ -114,65 +135,119 @@ namespace SamplePlugin
                         default:break;
                     }
                 }
-                foreach(int x in this.num)//ボーナス判定
+                double bonus = 0;
+                foreach(int x in num)
                 {
-                    this.rateBonus = (x == 3)&&this.bonus ? 4.0 : 0;
+                    if(x == 3) {
+                        bonus = rateBonus;
+                        break;
+                    }
                 }
-                this.players.ForEach(p => //playerに勝敗結果ぶちこんでく
+                
+                for (int i =0; i < players.Count;i++) //playerに勝敗結果ぶちこんでく
                 {
+                    Player p = players[i];
                     switch (p.type)
                     {
                         case betType.high:
-                            p.score += this.high ?
-                            p.bet * (this.rateHigh+this.rateBonus) :
-                            -p.bet;
+                            p.score += high ?
+                                p.bet * (rateHigh+bonus) :
+                                -p.bet;
                             break;
                         case betType.low:
-                            p.score += this.low ?
-                            p.bet * (this.rateLow + this.rateBonus) : 
-                            -p.bet;
+                            p.score += low ?
+                                p.bet * (rateLow + bonus) : 
+                                -p.bet;
                             break;
                         case betType.num1:
-                            p.score += this.num[0] > 0 ?
-                            p.bet * (rateNum[this.num[0]--] + this.rateBonus) :
+                                p.score += num[0] > 0 ?
+                                p.bet * (rateNum[num[0] - 1] + bonus) :
                             -p.bet;
                             break;
                         case betType.num2:
-                            p.score += this.num[1] > 0 ?
-                            p.bet * (rateNum[this.num[1]--] + this.rateBonus) :
-                            -p.bet;
+                            p.score += num[1] > 0 ?
+                                p.bet * (rateNum[num[1] - 1] + bonus) :
+                                -p.bet;
                             break;
                         case betType.num3:
-                            p.score += this.num[2] > 0 ?
-                            p.bet * (rateNum[this.num[2]--] + this.rateBonus) :
-                            -p.bet;
+                            p.score += num[2] > 0 ? 
+                                p.bet * (rateNum[num[2] - 1] + bonus) :
+                                -p.bet;
                             break;
                         case betType.num4:
-                            p.score += this.num[3] > 0 ?
-                            p.bet * (rateNum[this.num[3]--] + this.rateBonus) :
-                            -p.bet;
+                            p.score += num[3] > 0 ? 
+                                p.bet * (rateNum[num[3] - 1] + bonus) :
+                                -p.bet;
                             break;
                         case betType.num5:
-                            p.score += this.num[4] > 0 ?
-                            p.bet * (rateNum[this.num[4]--] + this.rateBonus) :
-                            -p.bet;
+                            p.score += num[4] > 0 ? 
+                                p.bet * (rateNum[num[4] - 1] + bonus) :
+                                -p.bet;
                             break;
                         case betType.num6:
-                            p.score += this.num[5] > 0 ?
-                            p.bet * (rateNum[this.num[5]--] + this.rateBonus) :
-                            -p.bet;
+                            p.score += num[5] > 0 ? 
+                                p.bet * (rateNum[num[5] - 1] + bonus) :
+                                -p.bet;
                             break;
                         default:
                             break;
                     }
                     p.type = betType.none;
-                });
+                    var name = Regex.Replace(p.name, @"(?<= )(.*)","");
+                    msgs += this.players[i].score < p.score ?
+                        $"【{name}:{p.score}万G】 " :
+                        $" 【{name}:{p.score}万G】 ";
+                    //await Task.Delay(4000);
+                    //SendMessage(msg, XivChatType.Yell);
+
+
+                    this.players[i] = p;
+                }
+                chatGui.Print(msgs);
+                msgs = "WIN:";
+                if (high) results += "【High】";
+                if (low) results += "【low】";
+                for(int i =0;i < num.Length;i++)
+                {
+                    if (num[i] > 0) results += $"【{i + 1}】";
+                }
+                chatGui.Print(results);
+                results = "";
 
             }
         }
+        public bool TogglePremium()
+        {
+            premium = !premium;
+            if (premium)
+            {
+                rateBonus = RATE_P["bonus"];
+                rateNum[0] = RATE_P["num1"];
+                rateNum[1] = RATE_P["num2"];
+                rateNum[2] = RATE_P["num3"];
+                rateHigh = RATE_P["high"];
+                rateLow = RATE_P["low"];
+            }
+            else
+            {
+                rateBonus = RATE["bonus"];
+                rateNum[0] = RATE["num1"];
+                rateNum[1] = RATE["num2"];
+                rateNum[2] = RATE["num3"];
+                rateHigh = RATE["high"];
+                rateLow = RATE["low"];
+            }
+            return premium;
+        }
         public void AddPlayer(string name)
         {
-            if (this.players.Any(p => p.name == name)) return;//なまえとうろくされてたらreturn
+            if (this.players.Any(p => p.name == name))
+            {//なまえとうろくされてたらreturn
+                PluginLog.Debug("AddPlayer:登録済み");
+               
+                return; 
+            }
+
             this.players.Insert(0,new Player {name = name,score =0, bet = 0,type = betType.none});
             if(20<players.Count) players.RemoveAt(20);
         }
@@ -180,17 +255,41 @@ namespace SamplePlugin
         {
             this.players.RemoveAll(s => s.name == name);
         }
-        public void SetBet(string name ,int bet,betType type)
+        public async void SetBet(string name ,int bet,betType type)
         {
-
-            this.players.ForEach(s =>
+            for(int i = 0; i < this.players.Count;i++)
             {
-                if(s.name == name)
+                if (players[i].name == name)
                 {
-                    s.bet = bet;
-                    s.type = type;
+                    Player x = this.players[i];
+                    x.bet = bet;
+                    x.type = type;
+                    this.players[i] = x;
+                    PluginLog.Debug($"bet:{players[i].bet} type:{players[i].type}");
+                    name = Regex.Replace(name, @"(?<= )(.*)", "");
+                    //await Task.Delay(4000);
+
+                    //SendMessage($"{name}:Bet({type}>{bet})",XivChatType.Yell);
+
                 }
-            });
+            }
+        }
+        public void SendMessage(string msg,XivChatType type,string name = "Tsubasa Roseline")
+        {
+            var xivChat = new XivChatEntry();
+            var builder = new SeStringBuilder();
+            xivChat.Message = builder.Append(msg).Build();
+            builder = new SeStringBuilder();
+            xivChat.Name = builder.Append(name).Build();
+            xivChat.Type = type;
+            xivChat.SenderId= 0;
+
+            chatGui.PrintChat(xivChat);
+
+        }
+        public void Dispose()
+        {
+            players.Clear();
         }
     }
 

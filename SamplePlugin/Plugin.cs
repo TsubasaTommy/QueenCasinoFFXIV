@@ -24,7 +24,7 @@ namespace SamplePlugin
         public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("SamplePlugin");
 
-
+        public static string ?assetPath { get; set; }
         public ChatGui chatGui;
 
         public Plugin(
@@ -40,7 +40,8 @@ namespace SamplePlugin
             this.Configuration.Initialize(this.PluginInterface);
 
             // you might normally want to embed resources and load them from the manifest stream
-            var imagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
+            assetPath = PluginInterface.AssemblyLocation.Directory?.FullName!;
+            var imagePath = Path.Combine(assetPath, "goat.png");
             var goatImage = this.PluginInterface.UiBuilder.LoadImage(imagePath);
 
 

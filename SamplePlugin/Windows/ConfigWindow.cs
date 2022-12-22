@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
+using Dalamud.Logging;
 using ImGuiNET;
 using static SamplePlugin.Constants;
 
@@ -26,10 +27,11 @@ public class ConfigWindow : Window, IDisposable
     public override void Draw()
     {
         // can't ref a property, so use a local copy
-        var configValue = this.Configuration.SomePropertyToBeSavedAndWithADefault;
+        var configValue = this.Configuration.test;
         if (ImGui.Checkbox("Random Config Bool", ref configValue))
         {
-            this.Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
+            PluginLog.Debug($"{configValue}");
+            this.Configuration.test = configValue;
             // can save immediately on change, if you don't want to provide a "Save and Close" button
             this.Configuration.Save();
         }

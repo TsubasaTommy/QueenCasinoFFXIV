@@ -22,8 +22,8 @@ public class MainWindow : Window, IDisposable
     private ChatGui chatGui;
     private Plugin Plugin;
     private Logic logic;
-    
 
+    private Configuration configuration;
     
 
     public MainWindow(
@@ -39,9 +39,10 @@ public class MainWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
         
+        this.configuration = plugin.Configuration;
         this.chatGui = chatGui;
         this.Plugin = plugin;
-        this.logic = new Logic(chatGui);
+        this.logic = new Logic(chatGui, plugin);
 
         //Event Chat update
         this.chatGui.ChatMessage += this.OnChat;
@@ -51,11 +52,11 @@ public class MainWindow : Window, IDisposable
 
     public void OnChat(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
     {
-        PluginLog.Debug($"{type} {senderId} {sender.ToString()} ");
+        
         
         if (type.ToString() == "2122")// dice or not
         {
-            PluginLog.Debug("Detected dice");
+           
             this.logic.MainLogic(message.ToString());
         }
         
@@ -72,7 +73,7 @@ public class MainWindow : Window, IDisposable
                         return ch.ToString();
                     });
 
-                    PluginLog.Debug($"Detected say:{betMessage}");
+                   
                     int bet;
                     Logic.betType betType;
            
@@ -118,16 +119,16 @@ public class MainWindow : Window, IDisposable
     public override void Draw()
     {
         var flags =  ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg ;
-        if (ImGui.Button("All reset")) this.logic = new Logic(chatGui);
-        if (ImGui.Button($"Premium:{logic.premium}")) logic.TogglePremium();
-        if (ImGui.Button("Send Message")) 
+        
+        if (ImGui.BeginTable("setting", 1, flags))
         {
-            logic.SendMessage("hello",XivChatType.Yell);
+            ImGui.TableNextRow();
+
+            ImGui.TableNextColumn();
+            if (ImGui.Button("All reset")) this.logic = new Logic(chatGui,Plugin);
+
+            ImGui.EndTable();
         }
-
-
-        ImGui.Text($"High:{logic.high}");
-        ImGui.Text($"Low:{logic.low}");
 
         if (ImGui.BeginTable("number", logic.num.Length,flags))
         {
@@ -145,8 +146,9 @@ public class MainWindow : Window, IDisposable
         }
 
 
-        if(ImGui.BeginTable("player", 5,flags))
+        if(ImGui.BeginTable("player", 6,flags))
         {
+            ImGui.TableSetupColumn($"Premium");
             ImGui.TableSetupColumn($"Name");
             ImGui.TableSetupColumn($"Score");
             ImGui.TableSetupColumn($"Type");
@@ -157,6 +159,15 @@ public class MainWindow : Window, IDisposable
 
             for (int row = 0; row < logic.players.Count; row++)
             {
+                ImGui.TableNextColumn();
+                bool isPremium = configuration.name_P.Contains(logic.players[row].name);
+                if (ImGui.Button($"{isPremium}"))
+                {
+                    if (isPremium) configuration.name_P.Remove(logic.players[row].name);
+                    else           configuration.name_P.Add(logic.players[row].name);
+                    configuration.Save();
+                    logic.RefreshPremium(configuration.name_P);
+                }
 
                 ImGui.TableNextColumn();
                 ImGui.Text($"{logic.players[row].name}");

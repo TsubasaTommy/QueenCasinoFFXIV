@@ -12,8 +12,7 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Gui;
 using System.Text.RegularExpressions;
 using Microsoft.VisualBasic;
-
-
+using System.Runtime.CompilerServices;
 
 namespace SamplePlugin.Windows;
 
@@ -64,8 +63,8 @@ public class MainWindow : Window, IDisposable
         {
             case XivChatType.Say:
             case XivChatType.Party:
-                //if (Regex.IsMatch(sender.ToString(), "Tsubasa Roseline")) break;//sayでつぱた無視
-                if (!Regex.IsMatch(message.ToString(), @"^bet|^b|^ｂ")) break;
+                if (Regex.IsMatch(sender.ToString(), "Tsubasa Roseline")) break;//sayでつぱた無視
+                if (!Regex.IsMatch(message.ToString(), @"^bet|^b|^ｂ|^B|^B")) break;
                 try
                 {
                     string betMessage = Regex.Replace(message.ToString(), "[０-９]", delegate (Match m) {
@@ -79,9 +78,9 @@ public class MainWindow : Window, IDisposable
            
                     bet = int.Parse(Regex.Match(betMessage.ToString(), @"[1-9][0-9]+").ToString());
 
-                    if (BET_MAX < bet)
+                    if (configuration.MAX_BET < bet)
                     {
-                        bet = BET_MAX;
+                        bet = configuration.MAX_BET;
                     }
 
                     betType = DetectBetType(betMessage.ToString());
@@ -102,6 +101,7 @@ public class MainWindow : Window, IDisposable
                 if (Regex.IsMatch(message.ToString(), @"運命のダイス"))
                 {
                     logic.InitializeDice();
+                    logic.RefreshPremium(configuration.name_P);
                     PluginLog.Debug("logic.dice initialized");
                 }
                 break;
@@ -118,75 +118,163 @@ public class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
-        var flags =  ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg ;
-        
-        if (ImGui.BeginTable("setting", 1, flags))
+        if (ImGui.BeginTabBar("#tabs"))
         {
-            ImGui.TableNextRow();
+            var flags = ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg;
 
-            ImGui.TableNextColumn();
-            if (ImGui.Button("All reset")) this.logic = new Logic(chatGui,Plugin);
-
-            ImGui.EndTable();
-        }
-
-        if (ImGui.BeginTable("number", logic.num.Length,flags))
-        {
-            for(int i = 0; i < logic.num.Length; i++)
+            if (ImGui.BeginTabItem("Home"))
             {
-                ImGui.TableSetupColumn($"Num:{i + 1}");
-            }
-            ImGui.TableHeadersRow();
-            foreach (var (x, i) in logic.num.Select((value, index) => (value, index)))
-            {
-                ImGui.TableNextColumn();
-                ImGui.Text($"{x}");
-            }
-            ImGui.EndTable();
-        }
 
-
-        if(ImGui.BeginTable("player", 6,flags))
-        {
-            ImGui.TableSetupColumn($"Premium");
-            ImGui.TableSetupColumn($"Name");
-            ImGui.TableSetupColumn($"Score");
-            ImGui.TableSetupColumn($"Type");
-            ImGui.TableSetupColumn($"Bet");
-            ImGui.TableSetupColumn($"Delete");
-
-            ImGui.TableHeadersRow();
-
-            for (int row = 0; row < logic.players.Count; row++)
-            {
-                ImGui.TableNextColumn();
-                bool isPremium = configuration.name_P.Contains(logic.players[row].name);
-                if (ImGui.Button($"{isPremium}"))
+                if (ImGui.BeginTable("setting", 2, flags))
                 {
-                    if (isPremium) configuration.name_P.Remove(logic.players[row].name);
-                    else           configuration.name_P.Add(logic.players[row].name);
-                    configuration.Save();
-                    logic.RefreshPremium(configuration.name_P);
+                    ImGui.TableNextRow();
+
+                    ImGui.TableNextColumn();
+                    if (ImGui.Button("All reset")) 
+                    {
+                        this.logic = new Logic(chatGui, Plugin);
+                        configuration.globalScore.Remove("Tsubasa Roseline");
+                        
+                        configuration.Save();
+                    } 
+                    ImGui.TableNextColumn();
+                    var configMaxBet = configuration.MAX_BET;
+                    if (ImGui.InputInt("MAX Bet", ref configMaxBet))
+                    {
+                        configuration.MAX_BET = configMaxBet;
+                        configuration.Save();
+                    }
+
+                    ImGui.EndTable();
                 }
 
-                ImGui.TableNextColumn();
-                ImGui.Text($"{logic.players[row].name}");
 
-                ImGui.TableNextColumn();
-                ImGui.Text($"{logic.players[row].score}");
 
-                ImGui.TableNextColumn();
-                ImGui.Text($"{logic.players[row].type}");
 
-                ImGui.TableNextColumn();
-                ImGui.Text($"{logic.players[row].bet}");
+                if (ImGui.BeginTable("player", 6, flags))
+                {
+                    ImGui.TableSetupColumn($"Premium");
+                    ImGui.TableSetupColumn($"Name");
+                    ImGui.TableSetupColumn($"Score");
+                    ImGui.TableSetupColumn($"Type");
+                    ImGui.TableSetupColumn($"Bet");
+                    ImGui.TableSetupColumn($"Delete");
 
-                ImGui.TableNextColumn();
-                if (ImGui.Button("X")) logic.players.RemoveAt(row);
+                    ImGui.TableHeadersRow();
 
-                ImGui.TableNextRow();
+                    for (int row = 0; row < logic.players.Count; row++)
+                    {
+                        ImGui.TableNextColumn();
+                        var configNameP = configuration.name_P;
+                        bool isPremium = configNameP.Contains(logic.players[row].name);
+                        if (ImGui.Button($"{isPremium}{row}"))
+                        {
+                            
+                            if (isPremium) configNameP.Remove(logic.players[row].name);
+                            else           configNameP.Add(logic.players[row].name);
+                            configuration.name_P = configNameP;
+                            configuration.Save();
+                            logic.RefreshPremium(configuration.name_P);
+                            
+                        }
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{logic.players[row].name}");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{logic.players[row].score}");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{logic.players[row].type}");
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{logic.players[row].bet}");
+
+                        ImGui.TableNextColumn();
+                        if (ImGui.Button($"X{row}")) logic.players.RemoveAt(row);
+
+                        ImGui.TableNextRow();
+                    }
+                    ImGui.EndTable();
+                }
+                ImGui.EndTabItem();
             }
-            ImGui.EndTable();
+            if (ImGui.BeginTabItem("GlobalScores"))
+            {
+                if(ImGui.BeginTable("GS", 1, flags))
+                {
+                
+                    ImGui.TableSetupColumn($"GScore");
+                    ImGui.TableHeadersRow();
+
+                    foreach(var x in configuration.globalScore.OrderByDescending(i =>i.Value))
+                    {
+
+                        ImGui.TableNextColumn();
+                        int y = (int)x.Value;
+                        if(ImGui.InputInt($"{x.Key}",ref y))
+                        {
+                            configuration.globalScore[x.Key] = (double)y;
+                            configuration.Save();
+                        }
+                        ImGui.TableNextRow();
+                    }
+                    ImGui.EndTable();
+                }
+                ImGui.EndTabItem();
+            }
+            if (ImGui.BeginTabItem("Debug"))
+            {
+                if (ImGui.Button("AddDemoPlayer"))
+                {
+                    logic.AddDemoPlayer();
+                }
+                if (ImGui.Button("Start emulate"))
+                {
+                    logic.AddDemoPlayer(Logic.betType.high);
+                    logic.AddDemoPlayer(Logic.betType.low);
+                    logic.AddDemoPlayer(Logic.betType.num1);
+                    logic.AddDemoPlayer(Logic.betType.num2);
+                    logic.AddDemoPlayer(Logic.betType.num3);
+                    logic.AddDemoPlayer(Logic.betType.num4);
+                    logic.AddDemoPlayer(Logic.betType.num5);
+                    logic.AddDemoPlayer(Logic.betType.num6);
+
+                    for(int i = 0; i < 150000; i++)
+                    {
+                        var random = new Random(i);
+
+                        var d1 = random.Next(1, 7);
+                        var d2 = random.Next(1, 7);
+                        var d3 = random.Next(1, 7);
+
+                        logic.MainLogic($"6面ダイス！ Tsubasa Roselineは、{d1}を出した！",true);
+                        logic.MainLogic($"6面ダイス！ Tsubasa Roselineは、{d2}を出した！", true);
+                        logic.MainLogic($"6面ダイス！ Tsubasa Roselineは、{d3}を出した！", true);
+                        logic.InitializeDice();
+                    }
+                }
+                {
+
+                }
+                    if (ImGui.BeginTable("number", logic.num.Length, flags))
+                {
+                    for (int i = 0; i < logic.num.Length; i++)
+                    {
+                        ImGui.TableSetupColumn($"Num:{i + 1}");
+                    }
+                    ImGui.TableHeadersRow();
+                    foreach (var (x, i) in logic.num.Select((value, index) => (value, index)))
+                    {
+                        ImGui.TableNextColumn();
+                        ImGui.Text($"{x}");
+                    }
+                    ImGui.EndTable();
+                }
+                
+            }
+
+
         }
     }
     private Logic.betType DetectBetType(string str)

@@ -196,7 +196,7 @@ namespace SamplePlugin
                     {
                         if (configuration.globalScore.ContainsKey(p.name))
                         {
-                            configuration.globalScore[p.name] += p.score;
+                            configuration.globalScore[p.name] += this.players[i].score - p.score;
                         }
                         else
                         {

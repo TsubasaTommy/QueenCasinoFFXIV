@@ -272,7 +272,7 @@ namespace SamplePlugin
                 rateNum[2] = RATE_P100to500["num3"];
                 rateHigh = RATE_P100to500["high"];
                 rateLow = RATE_P100to500["low"];
-            }else if(bet <= 1000)
+            }else
             {
                 rateBonus = RATE_P500to1000["bonus"];
                 rateNum[0] = RATE_P500to1000["num1"];

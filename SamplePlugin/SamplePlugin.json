@@ -1,13 +1,14 @@
 {
-  "Author": "Tsubasa Roseline",
-  "Name": "Sample Plugin",
-  "Punchline": "A short one-liner that shows up in /xlplugins.",
-  "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
-  "InternalName": "samplePlugin",
-  "ApplicableVersion": "any",
-  "Tags": [
-    "sample",
-    "plugin",
-    "goats"
-  ]
+    "Author": "Tsubasa Roseline",
+    "Name": "QueenCasino14",
+    "Punchline": "Casino UI",
+    "Description": "caliculate in-game chat dice",
+    "InternalName": "QueenCasino14",
+    "ApplicableVersion": "any",
+    "DalamudApiLevel": 8,
+    "Tags": [
+        "sample",
+        "plugin",
+        "goats"
+    ]
 }

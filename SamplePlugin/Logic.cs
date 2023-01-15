@@ -131,54 +131,56 @@ namespace SamplePlugin
 
                 for (int i = 0; i < players.Count; i++) //playerに勝敗結果ぶちこんでく
                 {
+                    double score = 0;
                     Player p = players[i];
                     RatePremiumOrNot(p.premium,p.bet);
                     double bonus = isBonus?rateBonus:0;
                     switch (p.type)
                     {
                         case betType.high:
-                            p.score += high ?
+                            score = high ?
                                 p.bet * (rateHigh + bonus) :
                                 -p.bet;
                             break;
                         case betType.low:
-                            p.score += low ?
+                            score = low ?
                                 p.bet * (rateLow + bonus) : 
                                 -p.bet;
                             break;
                         case betType.num1:
-                                p.score += num[0] > 0 ?
-                                    p.bet * (rateNum[num[0] - 1] + bonus) :
-                                    -p.bet;
+                            score = num[0] > 0 ?
+                                p.bet * (rateNum[num[0] - 1] + bonus) :
+                                -p.bet;
                             break;
                         case betType.num2:
-                            p.score += num[1] > 0 ?
+                            score = num[1] > 0 ?
                                 p.bet * (rateNum[num[1] - 1] + bonus) :
                                 -p.bet;
                             break;
                         case betType.num3:
-                            p.score += num[2] > 0 ? 
+                            score = num[2] > 0 ? 
                                 p.bet * (rateNum[num[2] - 1] + bonus) :
                                 -p.bet;
                             break;
                         case betType.num4:
-                            p.score += num[3] > 0 ? 
+                            score = num[3] > 0 ? 
                                 p.bet * (rateNum[num[3] - 1] + bonus) :
                                 -p.bet;
                             break;
                         case betType.num5:
-                            p.score += num[4] > 0 ? 
+                            score = num[4] > 0 ? 
                                 p.bet * (rateNum[num[4] - 1] + bonus) :
                                 -p.bet;
                             break;
                         case betType.num6:
-                            p.score += num[5] > 0 ? 
+                            score = num[5] > 0 ? 
                                 p.bet * (rateNum[num[5] - 1] + bonus) :
                                 -p.bet;
                             break;
                         default:
                             break;
                     }
+                    p.score += score;
                     if (!debug)
                     {
                         p.type = betType.none;
@@ -196,7 +198,7 @@ namespace SamplePlugin
                     {
                         if (configuration.globalScore.ContainsKey(p.name))
                         {
-                            configuration.globalScore[p.name] += p.score - this.players[i].score;
+                            configuration.globalScore[p.name] += score;
                         }
                         else
                         {

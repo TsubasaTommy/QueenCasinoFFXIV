@@ -233,12 +233,7 @@ public class MainWindow : Window, IDisposable
                 {
                     logic.AddDemoPlayer(Logic.betType.high);
                     logic.AddDemoPlayer(Logic.betType.low);
-                    logic.AddDemoPlayer(Logic.betType.num1);
-                    logic.AddDemoPlayer(Logic.betType.num2);
-                    logic.AddDemoPlayer(Logic.betType.num3);
-                    logic.AddDemoPlayer(Logic.betType.num4);
-                    logic.AddDemoPlayer(Logic.betType.num5);
-                    logic.AddDemoPlayer(Logic.betType.num6);
+
 
                     for(int i = 0; i < 150000; i++)
                     {
@@ -284,7 +279,8 @@ public class MainWindow : Window, IDisposable
 
         if (Regex.IsMatch(str, @"high|ﾊｲ|ハイ|はい")) return Logic.betType.high;
         if (Regex.IsMatch(str, @"low|ﾛｳ|ロウ|ロー|ﾛｰ|ろう|ろー|ろｰ")) return Logic.betType.low;
-        try
+        return Logic.betType.none;
+        /*try
         {
             switch (int.Parse(Regex.Match(str, @"[1-6]").ToString()))
             {
@@ -307,6 +303,6 @@ public class MainWindow : Window, IDisposable
         catch
         {
             return Logic.betType.none;
-        }
+        }*/
     }
 }

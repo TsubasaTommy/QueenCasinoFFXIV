@@ -109,9 +109,9 @@ namespace SamplePlugin
                 PluginLog.Debug($"{this.dice[1]}");
                 PluginLog.Debug($"{this.dice[2]}");
 
-                this.high = this.dice.Sum() >= 12;
+                this.high = this.dice.Sum() >= 11;
 
-                this.low = this.dice.Sum() <= 9;
+                this.low = this.dice.Sum() <= 10;
 
                 foreach (int x in this.dice) //num
                 {
@@ -132,7 +132,7 @@ namespace SamplePlugin
                 for (int i = 0; i < players.Count; i++) //playerに勝敗結果ぶちこんでく
                 {
                     Player p = players[i];
-                    RatePremiumOrNot(p.premium,p.bet);
+                    SetRate(p.bet);
                     double bonus = isBonus?rateBonus:0;
                     switch (p.type)
                     {
@@ -146,36 +146,7 @@ namespace SamplePlugin
                                 p.bet * (rateLow + bonus) : 
                                 -p.bet;
                             break;
-                        case betType.num1:
-                                p.score += num[0] > 0 ?
-                                    p.bet * (rateNum[num[0] - 1] + bonus) :
-                                    -p.bet;
-                            break;
-                        case betType.num2:
-                            p.score += num[1] > 0 ?
-                                p.bet * (rateNum[num[1] - 1] + bonus) :
-                                -p.bet;
-                            break;
-                        case betType.num3:
-                            p.score += num[2] > 0 ? 
-                                p.bet * (rateNum[num[2] - 1] + bonus) :
-                                -p.bet;
-                            break;
-                        case betType.num4:
-                            p.score += num[3] > 0 ? 
-                                p.bet * (rateNum[num[3] - 1] + bonus) :
-                                -p.bet;
-                            break;
-                        case betType.num5:
-                            p.score += num[4] > 0 ? 
-                                p.bet * (rateNum[num[4] - 1] + bonus) :
-                                -p.bet;
-                            break;
-                        case betType.num6:
-                            p.score += num[5] > 0 ? 
-                                p.bet * (rateNum[num[5] - 1] + bonus) :
-                                -p.bet;
-                            break;
+                        
                         default:
                             break;
                     }
@@ -242,44 +213,30 @@ namespace SamplePlugin
                 }
             }
         }
-        public void RatePremiumOrNot(bool isPremium,int bet)
+        public void SetRate(int bet)
         {
-            if(bet <= 100)
+            if(bet < 100)
             {
-                if (isPremium)
-                {
-                    rateBonus = RATE_P["bonus"];
-                    rateNum[0] = RATE_P["num1"];
-                    rateNum[1] = RATE_P["num2"];
-                    rateNum[2] = RATE_P["num3"];
-                    rateHigh = RATE_P["high"];
-                    rateLow = RATE_P["low"];
-                }
-                else
-                {
-                    rateBonus = RATE["bonus"];
-                    rateNum[0] = RATE["num1"];
-                    rateNum[1] = RATE["num2"];
-                    rateNum[2] = RATE["num3"];
-                    rateHigh = RATE["high"];
-                    rateLow = RATE["low"];
-                }
-            }else if(bet <= 500)
+                rateBonus = RATE["bonus"];
+                rateHigh = RATE["high"];
+                rateLow = RATE["low"];
+               
+            }else if(bet < 400)
             {
-                rateBonus = RATE_P100to500["bonus"];
-                rateNum[0] = RATE_P100to500["num1"];
-                rateNum[1] = RATE_P100to500["num2"];
-                rateNum[2] = RATE_P100to500["num3"];
-                rateHigh = RATE_P100to500["high"];
-                rateLow = RATE_P100to500["low"];
-            }else
+                rateBonus = RATE2["bonus"];
+                rateHigh = RATE2["high"];
+                rateLow = RATE2["low"];
+            }else if(bet < 700)
             {
-                rateBonus = RATE_P500to1000["bonus"];
-                rateNum[0] = RATE_P500to1000["num1"];
-                rateNum[1] = RATE_P500to1000["num2"];
-                rateNum[2] = RATE_P500to1000["num3"];
-                rateHigh = RATE_P500to1000["high"];
-                rateLow = RATE_P500to1000["low"];
+                rateBonus = RATE3["bonus"];
+                rateHigh = RATE3["high"];
+                rateLow = RATE3["low"];
+            }
+            else
+            {
+                rateBonus = RATE4["bonus"];
+                rateHigh = RATE4["high"];
+                rateLow = RATE4["low"];
             }
 
         }

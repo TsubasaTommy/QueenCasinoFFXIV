@@ -10,42 +10,30 @@ namespace SamplePlugin
     {
         public const string WINDOWNAME_MAIN = "MainWindow";
         public const string WINDOWNAME_CONF = "ConfigWindow";
-        public const int BET_MAX = 500;
-        public static readonly Dictionary<string, double> RATE_P = new Dictionary<string, double>()
+        public const int BET_MAX = 1000;
+        public static readonly Dictionary<string, double> RATE4 = new Dictionary<string, double>()
         {
             {"bonus" ,4.0},
-            {"num1", 1},
-            {"num2", 2},
-            {"num3", 10},
-            {"high",1.5 },
-            {"low",1.5 },
+            {"high",0.85 },
+            {"low",0.85 },
         };
-        public static readonly Dictionary<string, double> RATE_P100to500 = new Dictionary<string, double>()
+        public static readonly Dictionary<string, double> RATE3 = new Dictionary<string, double>()
+        {
+            { "bonus", 3.0 } , 
+            { "high", 0.9 } , 
+            { "low", 0.9 },
+        };
+        public static readonly Dictionary<string, double> RATE2 = new Dictionary<string, double>()
         {
             {"bonus" ,2.0},
-            {"num1", 0.9},
-            {"num2", 1.2},
-            {"num3", 3},
-            {"high",1.2 },
-            {"low",1.2 },
-        };
-        public static readonly Dictionary<string, double> RATE_P500to1000 = new Dictionary<string, double>()
-        {
-            {"bonus" ,1.0},
-            {"num1", 0.7},
-            {"num2", 1},
-            {"num3", 3},
-            {"high",1.0 },
-            {"low",1.0 },
+            {"high",0.95 },
+            {"low",0.95 },
         };
         public static readonly Dictionary<string, double> RATE = new Dictionary<string, double>()
         {
-            {"bonus" ,2.0},
-            {"num1", 1},
-            {"num2", 2},
-            {"num3", 3},
-            {"high",1.4 },
-            {"low",1.4 },
+            {"bonus" ,0.1},
+            {"high",1.0 },
+            {"low",1.0 },
         };
     }
 }

@@ -180,16 +180,11 @@ namespace SamplePlugin
                 }
                 if (!debug)
                 {
-                    chatGui.Print(msgs);
-                    msgs = "";
                     results = $"WIN -->";
                     if (high) results += "【High】";
                     if (low) results += "【low】";
-                    for(int i =0;i < num.Length;i++)
-                    {
-                        if (num[i] > 0) results += $"【{i + 1}】";
-                    }
-                    chatGui.Print(results);
+                    chatGui.Print(results + msgs);
+                    msgs = "";
                     results = "";
                 }
             }
